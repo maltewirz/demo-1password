@@ -1,4 +1,4 @@
-To reproduce Bug: see video <video controls src="1Password Demo App.mov" title="Title"></video>
+To reproduce Bug: see video `1Password Demo App.mov`
 
 # SimpleWebAuthn Example Project
 
