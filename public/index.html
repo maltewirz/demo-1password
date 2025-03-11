@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Main Page</title>
+  </head>
+  <body>
+    <button id="openCombined">Open WebAuthn Window</button>
+    <script>
+      document.getElementById('openCombined').addEventListener('click', () => {
+        // Opens the combined page in a new window with specified dimensions.
+        window.open('all.html', 'WebAuthnWindow', 'width=800,height=600');
+      });
+    </script>
+  </body>
+</html>

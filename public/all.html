@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SimpleWebAuthn - Combined</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://unpkg.com/@simplewebauthn/browser@11.0.0/dist/bundle/index.es5.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>SimpleWebAuthn Example</h1>
+
+      <!-- Registration Section -->
+      <section id="registration">
+        <h2>Register</h2>
+        <button id="btnRegBegin">
+          <strong>🚪&nbsp;Register</strong>
+        </button>
+        <p id="regSuccess" class="success"></p>
+        <p id="regError" class="error"></p>
+        <details open>
+          <summary>Registration Console</summary>
+          <textarea id="regDebug" spellcheck="false"></textarea>
+        </details>
+      </section>
+
+      <!-- Authentication Section -->
+      <section id="authentication">
+        <h2>Authenticate</h2>
+        <form onsubmit="event.preventDefault();">
+          <div id="inputUsername">
+            <label for="username">Username</label>
+            <input type="text" name="username" autocomplete="username webauthn" autofocus />
+            <br />
+            <label for="password">Password</label>
+            <input type="password" name="password" autocomplete="current-password webauthn" />
+            <br />
+          </div>
+          <button id="btnAuthBegin">
+            <strong>🔐&nbsp;Authenticate</strong>
+          </button>
+        </form>
+        <p id="authSuccess" class="success"></p>
+        <p id="authError" class="error"></p>
+        <details open>
+          <summary>Authentication Console</summary>
+          <textarea id="authDebug" spellcheck="false"></textarea>
+        </details>
+      </section>
+    </div>
+
+    <script>
+      const { startRegistration, startAuthentication, browserSupportsWebAuthn } = SimpleWebAuthnBrowser;
+
+      if (!browserSupportsWebAuthn()) {
+        document.querySelector('.container').innerHTML =
+          "<p>Your browser doesn't support WebAuthn</p>";
+      } else {
+        // --- Registration Flow ---
+        document.getElementById('btnRegBegin').addEventListener('click', async () => {
+          // Clear previous messages
+          document.getElementById('regSuccess').innerHTML = '';
+          document.getElementById('regError').innerHTML = '';
+          document.getElementById('regDebug').innerHTML = '';
+          try {
+            const resp = await fetch('/generate-registration-options');
+            const opts = await resp.json();
+            document.getElementById('regDebug').innerHTML = JSON.stringify(opts, null, 2);
+            
+            const attResp = await startRegistration({ optionsJSON: opts });
+            document.getElementById('regDebug').innerHTML += "\n" + JSON.stringify(attResp, null, 2);
+            
+            const verificationResp = await fetch('/verify-registration', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(attResp),
+            });
+            const verificationJSON = await verificationResp.json();
+            document.getElementById('regDebug').innerHTML += "\n" + JSON.stringify(verificationJSON, null, 2);
+            
+            if (verificationJSON && verificationJSON.verified) {
+              document.getElementById('regSuccess').innerHTML = "Authenticator registered!";
+            } else {
+              document.getElementById('regError').innerHTML = "Error: " + JSON.stringify(verificationJSON);
+            }
+          } catch (error) {
+            document.getElementById('regError').innerHTML = error;
+          }
+        });
+
+        // --- Authentication Flow ---
+        document.getElementById('btnAuthBegin').addEventListener('click', async () => {
+          // Clear previous messages
+          document.getElementById('authSuccess').innerHTML = '';
+          document.getElementById('authError').innerHTML = '';
+          document.getElementById('authDebug').innerHTML = '';
+          try {
+            const resp = await fetch('/generate-authentication-options');
+            const opts = await resp.json();
+            document.getElementById('authDebug').innerHTML = JSON.stringify(opts, null, 2);
+            
+            const asseResp = await startAuthentication({ optionsJSON: opts });
+            document.getElementById('authDebug').innerHTML += "\n" + JSON.stringify(asseResp, null, 2);
+            
+            const verificationResp = await fetch('/verify-authentication', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(asseResp),
+            });
+            const verificationJSON = await verificationResp.json();
+            document.getElementById('authDebug').innerHTML += "\n" + JSON.stringify(verificationJSON, null, 2);
+            
+            if (verificationJSON && verificationJSON.verified) {
+              document.getElementById('authSuccess').innerHTML = "User authenticated!";
+            } else {
+              document.getElementById('authError').innerHTML = "Error: " + JSON.stringify(verificationJSON);
+            }
+          } catch (error) {
+            document.getElementById('authError').innerHTML = error;
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
